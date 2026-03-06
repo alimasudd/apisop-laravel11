@@ -19,12 +19,20 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:m_user',
             'password' => 'required|string|min:8',
             'hp' => 'required|string|max:20',
+        ], [
+            'nama.required' => 'Nama lengkap wajib diisi.',
+            'email.required' => 'Alamat email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email sudah terdaftar, silakan gunakan email lain.',
+            'password.required' => 'Password wajib diisi.',
+            'password.min' => 'Password minimal harus 8 karakter.',
+            'hp.required' => 'Nomor HP wajib diisi.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Validation error',
+                'message' => 'Pendaftaran gagal karena data tidak valid.',
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -54,24 +62,42 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email',
             'password' => 'required|string',
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'password.required' => 'Password wajib diisi.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Validation error',
+                'message' => 'Login gagal, periksa kembali inputan Anda.',
                 'errors' => $validator->errors()
             ], 422);
         }
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Invalid login credentials'
+                'message' => 'Akun dengan email tersebut tidak ditemukan.'
+            ], 404);
+        }
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Password yang Anda masukkan salah.'
             ], 401);
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
+        if ($user->status_aktif != 1) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akun Anda sedang tidak aktif. Silakan hubungi admin.'
+            ], 403);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
