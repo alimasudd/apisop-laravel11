@@ -20,6 +20,7 @@ class UserController extends Controller
         $search = $request->query('search');
 
         $users = User::query()
+            ->select('id', 'nama', 'email', 'hp', 'level_id', 'status_aktif')
             ->when($search, function ($query, $search) {
                 $query->where('nama', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
@@ -28,9 +29,18 @@ class UserController extends Controller
             ->paginate(10);
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Users list retrieved successfully',
-            'data' => $users
+            'success' => true,
+            'data' => [
+                'users' => $users->items(),
+                'pagination' => [
+                    'current_page' => $users->currentPage(),
+                    'last_page' => $users->lastPage(),
+                    'per_page' => $users->perPage(),
+                    'total' => $users->total(),
+                    'next_page_url' => $users->nextPageUrl(),
+                    'prev_page_url' => $users->previousPageUrl(),
+                ]
+            ]
         ]);
     }
 
@@ -50,7 +60,7 @@ class UserController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'error',
+                'success' => false,
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
@@ -66,9 +76,9 @@ class UserController extends Controller
         ]);
 
         return response()->json([
-            'status' => 'success',
+            'success' => true,
             'message' => 'User created successfully',
-            'data' => $user
+            'data' => $user->only(['id', 'nama', 'email', 'hp', 'level_id', 'status_aktif'])
         ], 201);
     }
 
@@ -77,17 +87,17 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        $user = User::find($id);
+        $user = User::select('id', 'nama', 'email', 'hp', 'level_id', 'status_aktif')->find($id);
 
         if (!$user) {
             return response()->json([
-                'status' => 'error',
+                'success' => false,
                 'message' => 'User not found'
             ], 404);
         }
 
         return response()->json([
-            'status' => 'success',
+            'success' => true,
             'message' => 'User details retrieved successfully',
             'data' => $user
         ]);
@@ -102,7 +112,7 @@ class UserController extends Controller
 
         if (!$user) {
             return response()->json([
-                'status' => 'error',
+                'success' => false,
                 'message' => 'User not found'
             ], 404);
         }
@@ -124,7 +134,7 @@ class UserController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'error',
+                'success' => false,
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
@@ -139,9 +149,9 @@ class UserController extends Controller
         $user->update($data);
 
         return response()->json([
-            'status' => 'success',
+            'success' => true,
             'message' => 'User updated successfully',
-            'data' => $user
+            'data' => $user->only(['id', 'nama', 'email', 'hp', 'level_id', 'status_aktif'])
         ]);
     }
 
@@ -154,7 +164,7 @@ class UserController extends Controller
 
         if (!$user) {
             return response()->json([
-                'status' => 'error',
+                'success' => false,
                 'message' => 'User not found'
             ], 404);
         }
@@ -162,7 +172,7 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json([
-            'status' => 'success',
+            'success' => true,
             'message' => 'User deleted successfully'
         ]);
     }
