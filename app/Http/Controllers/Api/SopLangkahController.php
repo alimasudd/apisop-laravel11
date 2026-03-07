@@ -80,7 +80,7 @@ class SopLangkahController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation error',
-                'errors' => $validator->errors()
+                'data' => $validator->errors()
             ], 422);
         }
 
@@ -147,7 +147,7 @@ class SopLangkahController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation error',
-                'errors' => $validator->errors()
+                'data' => $validator->errors()
             ], 422);
         }
 

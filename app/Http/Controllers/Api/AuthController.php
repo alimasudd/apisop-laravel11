@@ -31,9 +31,9 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'error',
+                'success' => false,
                 'message' => 'Pendaftaran gagal karena data tidak valid.',
-                'errors' => $validator->errors()
+                'data' => $validator->errors()
             ], 422);
         }
 
@@ -49,11 +49,13 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'status' => 'success',
+            'success' => true,
             'message' => 'User registered successfully',
-            'data' => $user,
-            'access_token' => $token,
-            'token_type' => 'Bearer',
+            'data' => [
+                'user' => $user,
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+            ]
         ], 201);
     }
 
@@ -69,9 +71,9 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'error',
+                'success' => false,
                 'message' => 'Login gagal, periksa kembali inputan Anda.',
-                'errors' => $validator->errors()
+                'data' => $validator->errors()
             ], 422);
         }
 
@@ -79,21 +81,21 @@ class AuthController extends Controller
 
         if (!$user) {
             return response()->json([
-                'status' => 'error',
+                'success' => false,
                 'message' => 'Akun dengan email tersebut tidak ditemukan.'
             ], 404);
         }
 
         if (!Hash::check($request->password, $user->password)) {
             return response()->json([
-                'status' => 'error',
+                'success' => false,
                 'message' => 'Password yang Anda masukkan salah.'
             ], 401);
         }
 
         if ($user->status_aktif != 1) {
             return response()->json([
-                'status' => 'error',
+                'success' => false,
                 'message' => 'Akun Anda sedang tidak aktif. Silakan hubungi admin.'
             ], 403);
         }
@@ -101,17 +103,19 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'status' => 'success',
+            'success' => true,
             'message' => 'Login success',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
+            'data' => [
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+            ]
         ]);
     }
 
     public function profile(Request $request)
     {
         return response()->json([
-            'status' => 'success',
+            'success' => true,
             'message' => 'Profile retrieved successfully',
             'data' => $request->user()
         ]);
@@ -122,7 +126,7 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-            'status' => 'success',
+            'success' => true,
             'message' => 'Logged out successfully'
         ]);
     }
