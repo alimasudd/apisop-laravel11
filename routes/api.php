@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AreaController;
+use App\Http\Controllers\Api\RuangController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -19,4 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Area CRUD
     Route::apiResource('areas', AreaController::class);
+
+    // Ruang CRUD
+    Route::apiResource('ruangs', RuangController::class);
 });

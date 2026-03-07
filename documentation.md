@@ -175,3 +175,82 @@ All endpoints require authentication.
     "message": "Area deleted successfully"
 }
 ```
+
+---
+
+## Ruang Management (CRUD)
+
+All endpoints require authentication.
+
+### 1. List Ruang
+**Endpoint:** `GET /api/ruangs`
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|---|---|---|
+| `search` | string | Search by room name, description, or area name |
+| `page` | integer | Page number for pagination |
+
+**Response:** `200 OK`
+```json
+{
+    "success": true,
+    "data": {
+        "ruangs": [
+            {
+                "id": 1,
+                "area_id": 6,
+                "nama": "SERVER GA",
+                "des": "SERVER GA",
+                "created_at": "...",
+                "area": {
+                    "id": 6,
+                    "nama": "HO",
+                    "des": "HO"
+                }
+            }
+        ],
+        "pagination": {
+            "current_page": 1,
+            "last_page": 1,
+            "per_page": 10,
+            "total": 3
+        }
+    }
+}
+```
+
+### 2. Create Ruang
+**Endpoint:** `POST /api/ruangs`
+
+**Request Body:**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `area_id` | integer | Yes | ID of the linked area |
+| `nama` | string | Yes | Room name |
+| `des` | string | No | Room description |
+
+**Response:** `201 Created`
+
+### 3. Get Ruang Details
+**Endpoint:** `GET /api/ruangs/{id}`
+
+**Response:** `200 OK`
+
+### 4. Update Ruang
+**Endpoint:** `PUT /api/ruangs/{id}`
+
+**Request Body:** `area_id`, `nama`, `des` (optional).
+
+**Response:** `200 OK`
+
+### 5. Delete Ruang
+**Endpoint:** `DELETE /api/ruangs/{id}`
+
+**Response:** `200 OK`
+```json
+{
+    "success": true,
+    "message": "Ruang deleted successfully"
+}
+```
