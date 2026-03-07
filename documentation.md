@@ -254,3 +254,54 @@ All endpoints require authentication.
     "message": "Ruang deleted successfully"
 }
 ```
+
+---
+
+## Kategori SOP Management (CRUD)
+
+All endpoints require authentication.
+
+### 1. List Kategori SOP
+**Endpoint:** `GET /api/kategori-sops`
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|---|---|---|
+| `search` | string | Search by code, name, or description |
+| `page` | integer | Page number |
+
+**Response Fields (Extra):**
+- `sops_count`: Total number of SOPs in this category.
+
+**Response:** `200 OK`
+
+### 2. Create Kategori SOP
+**Endpoint:** `POST /api/kategori-sops`
+
+**Request Body:**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `kode` | string | Yes | Unique code (e.g., KAT-001) |
+| `nama` | string | Yes | Category name |
+| `deskripsi` | string | No | |
+| `status` | enum | No | `aktif` or `nonaktif` (default: `aktif`) |
+
+**Response:** `201 Created`
+
+### 3. Get Details & SOP List
+**Endpoint:** `GET /api/kategori-sops/{id}`
+
+**Response:** includes category data and an array of `sops`.
+
+### 4. Update Kategori SOP
+**Endpoint:** `PUT /api/kategori-sops/{id}`
+
+**Request Body:** `kode`, `nama`, `deskripsi`, `status`.
+
+### 5. Delete Kategori SOP
+**Endpoint:** `DELETE /api/kategori-sops/{id}`
+
+### 6. Get SOPs only (Modal View)
+**Endpoint:** `GET /api/kategori-sops/{id}/sops`
+
+**Response:** returns the list of SOPs for the specific category.

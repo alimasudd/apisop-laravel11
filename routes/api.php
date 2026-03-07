@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AreaController;
 use App\Http\Controllers\Api\RuangController;
+use App\Http\Controllers\Api\KategoriSopController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -23,4 +24,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Ruang CRUD
     Route::apiResource('ruangs', RuangController::class);
+
+    // Kategori SOP CRUD
+    Route::get('kategori-sops/{id}/sops', [KategoriSopController::class, 'sops']);
+    Route::apiResource('kategori-sops', KategoriSopController::class);
 });
