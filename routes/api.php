@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\KategoriSopController;
 use App\Http\Controllers\Api\SopController;
 use App\Http\Controllers\Api\SopLangkahController;
 use App\Http\Controllers\Api\SopTugasController;
+use App\Http\Controllers\Api\SopPelaksanaController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -40,4 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Tugas SOP CRUD
     Route::apiResource('tugas-sops', SopTugasController::class)->only(['index', 'store', 'destroy']);
+
+    // Pelaksanaan SOP CRUD
+    Route::apiResource('pelaksanaan-sops', SopPelaksanaController::class);
 });

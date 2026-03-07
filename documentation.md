@@ -457,3 +457,49 @@ All endpoints require authentication.
 
 ### 3. Delete Assignment
 **Endpoint:** `DELETE /api/tugas-sops/{id}`
+
+---
+
+## Pelaksanaan SOP Management (Execution)
+
+All endpoints require authentication.
+
+### 1. List Pelaksanaan
+**Endpoint:** `GET /api/pelaksanaan-sops`
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|---|---|---|
+| `search` | string | Search by SOP Name, Employee, Area, or Room |
+
+**Response:** List of execution logs with full details including `sop`, `user` (pelaksana), `area`, and `ruang`.
+
+### 2. Record Pelaksanaan
+**Endpoint:** `POST /api/pelaksanaan-sops`
+
+**Request Body:**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `sop_id` | integer | Yes | SOP ID |
+| `user_id` | integer | Yes | User ID who executed the SOP |
+| `area_id` | integer | No | |
+| `ruang_id` | integer | No | |
+| `sop_langkah_id` | integer | No | Specific step ID (if executing single step) |
+| `status_sop` | integer | No | Periode: `0`=Day, `1`=Week, `2`=Month, `3`=Year |
+| `poin` | integer | No | Points earned |
+| `des` | string | No | Notes/Description |
+| `url` | string | No | URL to evidence (Photo/Video) |
+| `deadline_waktu` | bigint | No | Unix timestamp |
+| `waktu_mulai` | bigint | No | Unix timestamp |
+| `waktu_selesai` | bigint | No | Unix timestamp |
+
+**Response:** `201 Created`
+
+### 3. Get Details
+**Endpoint:** `GET /api/pelaksanaan-sops/{id}`
+
+### 4. Update Execution Record
+**Endpoint:** `PUT /api/pelaksanaan-sops/{id}`
+
+### 5. Delete Execution Record
+**Endpoint:** `DELETE /api/pelaksanaan-sops/{id}`
