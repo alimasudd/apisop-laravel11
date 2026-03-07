@@ -360,3 +360,61 @@ All endpoints require authentication.
 
 ### 5. Delete SOP
 **Endpoint:** `DELETE /api/sops/{id}`
+
+---
+
+## Langkah SOP Management (CRUD)
+
+All endpoints require authentication.
+
+### 1. List Langkah SOP
+**Endpoint:** `GET /api/langkah-sops`
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|---|---|---|
+| `search` | string | Search by step description, SOP name, or Room name |
+| `sop_id` | integer | Filter by SOP |
+| `wajib` | boolean | Filter by mandatory status |
+| `page` | integer | Page number |
+
+**Response Fields (Extra):**
+- `sop`: Associated SOP object.
+- `ruang`: Associated Room object.
+- `user`: Associated User object (responsible person).
+
+**Response:** `200 OK`
+
+### 2. Create Langkah SOP
+**Endpoint:** `POST /api/langkah-sops`
+
+**Request Body:**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `sop_id` | integer | Yes | Parent SOP ID |
+| `ruang_id` | integer | No | Linked room ID |
+| `user_id` | integer | No | User ID of person responsible |
+| `urutan` | integer | Yes | Step order (1, 2, 3...) |
+| `deskripsi_langkah` | string | Yes | Detail step description |
+| `wajib` | boolean | Yes | Whether the step is mandatory |
+| `poin` | integer | No | Points awarded for this step |
+| `deadline_waktu` | bigint | No | Timestamp or duration |
+| `toleransi_waktu_sebelum` | bigint | No | |
+| `toleransi_waktu_sesudah` | bigint | No | |
+| `wa_reminder` | boolean | No | WhatsApp notification |
+| `wa_jam_kirim` | string | No | Format `HH:MM` |
+
+**Response:** `201 Created`
+
+### 3. Get Step Details
+**Endpoint:** `GET /api/langkah-sops/{id}`
+
+**Response:** `200 OK`
+
+### 4. Update Langkah SOP
+**Endpoint:** `PUT /api/langkah-sops/{id}`
+
+**Request Body:** Same as Create.
+
+### 5. Delete Langkah SOP
+**Endpoint:** `DELETE /api/langkah-sops/{id}`

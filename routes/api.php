@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AreaController;
 use App\Http\Controllers\Api\RuangController;
 use App\Http\Controllers\Api\KategoriSopController;
 use App\Http\Controllers\Api\SopController;
+use App\Http\Controllers\Api\SopLangkahController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -32,4 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // SOP CRUD
     Route::apiResource('sops', SopController::class);
+
+    // Langkah SOP CRUD
+    Route::apiResource('langkah-sops', SopLangkahController::class);
 });
