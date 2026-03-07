@@ -305,3 +305,58 @@ All endpoints require authentication.
 **Endpoint:** `GET /api/kategori-sops/{id}/sops`
 
 **Response:** returns the list of SOPs for the specific category.
+
+---
+
+## SOP Management (CRUD)
+
+All endpoints require authentication.
+
+### 1. List SOP
+**Endpoint:** `GET /api/sops`
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|---|---|---|
+| `search` | string | Search by code, name, description, or category name |
+| `page` | integer | Page number |
+
+**Response Fields (Extra):**
+- `langkah_count`: Total number of steps in this SOP.
+- `kategori`: Category object.
+- `pengawas`: User object for the supervisor.
+
+**Response:** `200 OK`
+
+### 2. Create SOP
+**Endpoint:** `POST /api/sops`
+
+**Request Body:**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `katsop_id` | integer | Yes | Category ID |
+| `kode` | string | Yes | Unique code (e.g., SOP-OPR-001) |
+| `nama` | string | Yes | SOP name |
+| `deskripsi` | string | No | |
+| `versi` | string | No | e.g., 1.0 |
+| `tanggal_berlaku` | date | No | YYYY-MM-DD |
+| `tanggal_kadaluarsa` | date | No | YYYY-MM-DD |
+| `status` | enum | No | `aktif`, `nonaktif`, `draft`, `expired` |
+| `status_sop` | enum | Yes | `mutlak` or `custom` (Mapped to Periode in UI) |
+| `pengawas_id` | integer | No | User ID of the supervisor |
+| `total_poin` | integer | No | |
+
+**Response:** `201 Created`
+
+### 3. Get Details & Steps
+**Endpoint:** `GET /api/sops/{id}`
+
+**Response:** includes SOP data, `kategori`, `pengawas`, and an array of `langkah` (steps).
+
+### 4. Update SOP
+**Endpoint:** `PUT /api/sops/{id}`
+
+**Request Body:** Same as Create, but `kode` must be unique except for current ID.
+
+### 5. Delete SOP
+**Endpoint:** `DELETE /api/sops/{id}`

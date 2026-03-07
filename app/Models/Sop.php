@@ -18,12 +18,26 @@ class Sop extends Model
         'deskripsi',
         'dokumen',
         'versi',
+        'tanggal_berlaku',
+        'tanggal_kadaluarsa',
         'status',
         'status_sop',
+        'pengawas_id',
+        'total_poin',
     ];
 
     public function kategori()
     {
         return $this->belongsTo(KategoriSop::class, 'katsop_id');
+    }
+
+    public function pengawas()
+    {
+        return $this->belongsTo(User::class, 'pengawas_id');
+    }
+
+    public function langkah()
+    {
+        return $this->hasMany(SopLangkah::class, 'sop_id');
     }
 }
