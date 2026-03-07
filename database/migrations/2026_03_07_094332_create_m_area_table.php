@@ -10,12 +10,14 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('m_area', function (Blueprint $table) {
-            $table->id();
-            $table->string('nama');
-            $table->text('des')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('m_area')) {
+            Schema::create('m_area', function (Blueprint $table) {
+                $table->id();
+                $table->string('nama');
+                $table->text('des')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

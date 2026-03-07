@@ -418,3 +418,42 @@ All endpoints require authentication.
 
 ### 5. Delete Langkah SOP
 **Endpoint:** `DELETE /api/langkah-sops/{id}`
+
+---
+
+## SOP Tugas Management (Assignments)
+
+All endpoints require authentication.
+
+### 1. List Assignments
+**Endpoint:** `GET /api/tugas-sops`
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|---|---|---|
+| `search` | string | Search by Employee Name, SOP Name, or Step Description |
+
+**Response:** List of assignments with related `sop`, `langkah`, and `user` data.
+
+### 2. Create Assignment (Single or Mass)
+**Endpoint:** `POST /api/tugas-sops`
+
+**This endpoint handles both Single and Mass assignments.** Simply provide an array of user IDs and/or step IDs.
+
+**Request Body:**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `sop_id` | integer | Yes | SOP ID |
+| `user_ids` | array | Yes | Array of integers representing User IDs (e.g., `[1, 2, 3]`) |
+| `ditugaskan_pada` | enum | Yes | `semua` (for all steps) or `tertentu` (for specific steps) |
+| `sop_langkah_ids` | array | No | Array of integers representing Step IDs. Required if `ditugaskan_pada` is `tertentu`. |
+
+**How it works:** 
+- If `ditugaskan_pada` is `semua`, the system creates one row for each employee where `sop_langkah_id` is `null`.
+- If `ditugaskan_pada` is `tertentu`, the system creates one row for each employee-step combination.
+- **Duplicates are automatically skipped.**
+
+**Response:** `201 Created`
+
+### 3. Delete Assignment
+**Endpoint:** `DELETE /api/tugas-sops/{id}`
