@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class SopPelaksana extends Model
 {
     protected $table = 'm_sop_pelaksana';
+    public $timestamps = false;
 
     protected $fillable = [
         'area_id',
