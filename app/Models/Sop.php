@@ -23,7 +23,6 @@ class Sop extends Model
         'status_sop',
         'pengawas_id',
         'total_poin',
-        'periode',
     ];
 
     public function kategori()

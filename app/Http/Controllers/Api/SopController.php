@@ -52,6 +52,9 @@ class SopController extends Controller
      */
     public function store(Request $request)
     {
+        // Debug: explicitly log the value of status_sop
+        // \Log::info('Store SOP input: ', $request->all());
+
         $validator = Validator::make($request->all(), [
             'katsop_id' => 'required|integer|exists:m_kat_sop,id',
             'kode' => 'required|string|max:30|unique:m_sop',
@@ -60,22 +63,31 @@ class SopController extends Controller
             'versi' => 'nullable|string|max:20',
             'tanggal_berlaku' => 'nullable|date',
             'tanggal_kadaluarsa' => 'nullable|date',
-            'status' => 'nullable|in:aktif,nonaktif',
-            'status_sop' => 'nullable|in:draft,review,approved',
+            'status' => 'nullable|in:aktif,nonaktif,draft,expired',
+            'status_sop' => 'nullable|string', // Relaxed to debug what is being sent
             'pengawas_id' => 'nullable|integer|exists:m_user,id',
             'total_poin' => 'nullable|integer',
-            'periode' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation error',
-                'data' => $validator->errors()
+                'errors' => $validator->errors(),
+                'received_input' => $request->all()
             ], 422);
         }
 
-        $sop = Sop::create($request->all());
+        // Final check before creation to ensure it's valid for DB enum
+        $statusSop = $request->input('status_sop', 'mutlak');
+        if (!in_array($statusSop, ['mutlak', 'custom'])) {
+            $statusSop = 'mutlak';
+        }
+
+        $data = $request->all();
+        $data['status_sop'] = $statusSop;
+
+        $sop = Sop::create($data);
 
         return response()->json([
             'success' => true,
@@ -127,22 +139,30 @@ class SopController extends Controller
             'versi' => 'nullable|string|max:20',
             'tanggal_berlaku' => 'nullable|date',
             'tanggal_kadaluarsa' => 'nullable|date',
-            'status' => 'nullable|in:aktif,nonaktif',
-            'status_sop' => 'nullable|in:draft,review,approved',
+            'status' => 'nullable|in:aktif,nonaktif,draft,expired',
+            'status_sop' => 'nullable|string', // Relaxed to debug
             'pengawas_id' => 'nullable|integer|exists:m_user,id',
             'total_poin' => 'nullable|integer',
-            'periode' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation error',
-                'data' => $validator->errors()
+                'errors' => $validator->errors(),
+                'received_input' => $request->all()
             ], 422);
         }
 
-        $sop->update($request->all());
+        $statusSop = $request->input('status_sop', $sop->status_sop);
+        if (!in_array($statusSop, ['mutlak', 'custom'])) {
+            $statusSop = 'mutlak';
+        }
+
+        $data = $request->all();
+        $data['status_sop'] = $statusSop;
+
+        $sop->update($data);
 
         return response()->json([
             'success' => true,
