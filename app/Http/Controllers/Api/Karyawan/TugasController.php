@@ -40,17 +40,16 @@ class TugasController extends Controller
 
         // Fetch ALL execution data for the history tab (Jadwal Pelaksanaan)
         $pelaksanaanHistory = SopPelaksana::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
             ->get();
 
-        // Fetch execution data ONLY for today for the task tracking logic
-        $pelaksanaanHariIni = $pelaksanaanHistory->filter(function ($p) use ($today) {
-            // Check if created_at is today. Fallback to current date if column missing/empty
-            try {
-                return Carbon::parse($p->created_at)->isToday();
-            } catch (\Exception $e) {
-                return false;
-            }
+        // Fetch execution data ONLY for today based on waktu_mulai (unix timestamp)
+        // This is safer than relying on created_at column which might be missing/null
+        $todayStart = Carbon::today()->timestamp;
+        $todayEnd = Carbon::tomorrow()->timestamp;
+
+        $pelaksanaanHariIni = $pelaksanaanHistory->filter(function ($p) use ($todayStart, $todayEnd) {
+            return $p->waktu_mulai >= $todayStart && $p->waktu_mulai < $todayEnd;
         });
 
         $completedTodayIds = $pelaksanaanHariIni->whereNotNull('waktu_selesai')->pluck('sop_langkah_id')->toArray();
@@ -60,7 +59,7 @@ class TugasController extends Controller
         $dikerjakanCount = count(array_intersect($assignedStepIds, $inProgressTodayIds));
         $belumCount = max(0, $totalLangkah - $selesaiCount - $dikerjakanCount);
 
-        $poinHariIni = $pelaksanaanHariIni->sum('poin');
+        $poinHariIni = (int) $pelaksanaanHariIni->sum('poin');
 
         $relevantSopIds = array_unique(array_merge($sopIds, SopLangkah::whereIn('id', $assignedStepIds)->pluck('sop_id')->toArray()));
 
@@ -103,7 +102,7 @@ class TugasController extends Controller
                     'urutan' => $langkah->urutan,
                     'deskripsi_langkah' => $langkah->deskripsi_langkah,
                     'ruang_nama' => $langkah->ruang ? $langkah->ruang->nama : '-',
-                    'poin' => $langkah->poin,
+                    'poin' => (int) ($langkah->poin ?? 0),
                     'status' => $status,
                     'wajib' => $langkah->wajib,
                     'waktu_mulai' => $waktuMulaiStr
@@ -201,18 +200,22 @@ class TugasController extends Controller
             return response()->json(['success' => false, 'message' => 'Langkah tidak ditemukan'], 404);
         }
 
-        // Cek apakah sudah dikerjakan hari ini
-        $todayStr = Carbon::today()->toDateString();
+        // Cek apakah sudah dikerjakan hari ini menggunakan waktu_mulai (timestamp)
+        $todayStart = Carbon::today()->timestamp;
+        $todayEnd = Carbon::tomorrow()->timestamp;
+
         $existing = SopPelaksana::where('user_id', $user->id)
             ->where('sop_langkah_id', $langkah_id)
-            ->where('created_at', 'like', $todayStr . '%')
+            ->where('waktu_mulai', '>=', $todayStart)
+            ->where('waktu_mulai', '<', $todayEnd)
             ->first();
 
         if ($existing) {
-            if ($existing->waktu_selesai) {
-                return response()->json(['success' => false, 'message' => 'Langkah ini sudah diselesaikan hari ini'], 400);
-            }
-            return response()->json(['success' => false, 'message' => 'Langkah ini sedang dikerjakan hari ini', 'data' => $existing], 400);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Langkah ini sudah Anda mulai hari ini.',
+                'data' => $existing
+            ], 400);
         }
 
         try {
@@ -224,6 +227,7 @@ class TugasController extends Controller
                 'waktu_mulai' => time(),
                 'status_sop' => 0,
                 'poin' => 0,
+                'created_at' => Carbon::now(), // Set manual karena timestamps=false
             ]);
 
             return response()->json([
@@ -232,10 +236,21 @@ class TugasController extends Controller
                 'data' => $pelaksana
             ]);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal simpan pelaksanaan: ' . $e->getMessage()
-            ], 500);
+            // Coba lagi tanpa created_at jika kolomnya memang tidak ada
+            try {
+                $pelaksana = SopPelaksana::create([
+                    'user_id' => $user->id,
+                    'sop_id' => $langkah->sop_id,
+                    'sop_langkah_id' => $langkah_id,
+                    'ruang_id' => $langkah->ruang_id,
+                    'waktu_mulai' => time(),
+                    'status_sop' => 0,
+                    'poin' => 0,
+                ]);
+                return response()->json(['success' => true, 'message' => 'Berhasil (tanpa created_at)', 'data' => $pelaksana]);
+            } catch (\Exception $e2) {
+                return response()->json(['success' => false, 'message' => 'Gagal simpan: ' . $e2->getMessage()], 500);
+            }
         }
     }
 
