@@ -26,7 +26,7 @@ class UserController extends Controller
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('hp', 'like', "%{$search}%");
             })
-            ->paginate(10);
+            ->paginate($request->query('per_page', 10));
 
         return response()->json([
             'success' => true,
