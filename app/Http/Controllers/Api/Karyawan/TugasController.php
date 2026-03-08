@@ -131,9 +131,10 @@ class TugasController extends Controller
                     'dikerjakan' => $dikerjakanCount,
                     'belum' => $belumCount,
                     'poin_hari_ini' => (int) $poinHariIni,
-                    'jadwal_pelaksanaan' => 0 // Dummy or based on other logic
+                    'jadwal_pelaksanaan' => count($resultList) // For now same as tugas_hari_ini to test UI tabs
                 ],
-                'tugas_hari_ini' => $resultList
+                'tugas_hari_ini' => $resultList,
+                'jadwal_pelaksanaan' => $resultList // Add this to prevent null/empty on the other tab
             ]
         ]);
     }
