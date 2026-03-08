@@ -38,14 +38,20 @@ class TugasController extends Controller
 
         $totalLangkah = count($assignedStepIds);
 
-        // Fetch execution data for today. 
-        // We assume 'created_at' exists as a DATE or DATETIME if not failed on that.
-        // If it still fails, we might need to check the actual column name for date of execution.
-        $pelaksanaanHariIni = SopPelaksana::where('user_id', $user->id)
-            ->where(function ($q) use ($today) {
-                $q->whereDate('created_at', $today);
-            })
+        // Fetch ALL execution data for the history tab (Jadwal Pelaksanaan)
+        $pelaksanaanHistory = SopPelaksana::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
             ->get();
+
+        // Fetch execution data ONLY for today for the task tracking logic
+        $pelaksanaanHariIni = $pelaksanaanHistory->filter(function ($p) use ($today) {
+            // Check if created_at is today. Fallback to current date if column missing/empty
+            try {
+                return Carbon::parse($p->created_at)->isToday();
+            } catch (\Exception $e) {
+                return false;
+            }
+        });
 
         $completedTodayIds = $pelaksanaanHariIni->whereNotNull('waktu_selesai')->pluck('sop_langkah_id')->toArray();
         $inProgressTodayIds = $pelaksanaanHariIni->whereNull('waktu_selesai')->whereNotNull('waktu_mulai')->pluck('sop_langkah_id')->toArray();
@@ -58,6 +64,7 @@ class TugasController extends Controller
 
         $relevantSopIds = array_unique(array_merge($sopIds, SopLangkah::whereIn('id', $assignedStepIds)->pluck('sop_id')->toArray()));
 
+        // --- Build Tugas Hari Ini (Logic with Status) ---
         $sops = Sop::whereIn('id', $relevantSopIds)->with([
             'kategori',
             'langkah' => function ($q) use ($assignedStepIds) {
@@ -65,7 +72,7 @@ class TugasController extends Controller
             }
         ])->get();
 
-        $resultList = [];
+        $tugasList = [];
         foreach ($sops as $sop) {
             $steps = [];
             $countDone = 0;
@@ -105,7 +112,7 @@ class TugasController extends Controller
 
             $percentage = count($steps) > 0 ? round(($countDone / count($steps)) * 100) : 0;
 
-            $resultList[] = [
+            $tugasList[] = [
                 'id' => $sop->id,
                 'kode' => $sop->kode,
                 'nama' => $sop->nama,
@@ -121,6 +128,49 @@ class TugasController extends Controller
             ];
         }
 
+        // --- Build Jadwal Pelaksanaan (History Logic) ---
+        // Group by SOP code or ID to show what was executed
+        $historySopIds = $pelaksanaanHistory->pluck('sop_id')->unique()->toArray();
+        $historySops = Sop::whereIn('id', $historySopIds)->with('kategori', 'langkah.ruang')->get();
+
+        $jadwalList = [];
+        foreach ($historySops as $sop) {
+            $sopPelaksanaan = $pelaksanaanHistory->where('sop_id', $sop->id);
+
+            $steps = [];
+            foreach ($sop->langkah as $langkah) {
+                $p = $sopPelaksanaan->where('sop_langkah_id', $langkah->id)->first();
+                if (!$p)
+                    continue; // Only show steps that were actually executed in history
+
+                $status = 'belum_dikerjakan';
+                if ($p->waktu_selesai)
+                    $status = 'selesai';
+                else if ($p->waktu_mulai)
+                    $status = 'sedang_dikerjakan';
+
+                $steps[] = [
+                    'id' => $langkah->id,
+                    'urutan' => $langkah->urutan,
+                    'deskripsi_langkah' => $langkah->deskripsi_langkah,
+                    'ruang_nama' => $langkah->ruang ? $langkah->ruang->nama : '-',
+                    'status' => $status,
+                    'tanggal' => Carbon::parse($p->created_at)->format('d M Y H:i'),
+                ];
+            }
+
+            if (empty($steps))
+                continue;
+
+            $jadwalList[] = [
+                'id' => $sop->id,
+                'kode' => $sop->kode,
+                'nama' => $sop->nama,
+                'kategori_nama' => $sop->kategori ? $sop->kategori->nama : '-',
+                'langkah' => $steps,
+            ];
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Daftar tugas hari ini berhasil diambil',
@@ -131,10 +181,10 @@ class TugasController extends Controller
                     'dikerjakan' => $dikerjakanCount,
                     'belum' => $belumCount,
                     'poin_hari_ini' => (int) $poinHariIni,
-                    'jadwal_pelaksanaan' => count($resultList) // For now same as tugas_hari_ini to test UI tabs
+                    'jadwal_pelaksanaan' => count($jadwalList)
                 ],
-                'tugas_hari_ini' => $resultList,
-                'jadwal_pelaksanaan' => $resultList // Add this to prevent null/empty on the other tab
+                'tugas_hari_ini' => $tugasList,
+                'jadwal_pelaksanaan' => $jadwalList
             ]
         ]);
     }
