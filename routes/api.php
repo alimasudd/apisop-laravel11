@@ -4,14 +4,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\AreaController;
-use App\Http\Controllers\Api\RuangController;
-use App\Http\Controllers\Api\KategoriSopController;
-use App\Http\Controllers\Api\SopController;
-use App\Http\Controllers\Api\SopLangkahController;
-use App\Http\Controllers\Api\SopTugasController;
-use App\Http\Controllers\Api\SopPelaksanaController;
+use App\Http\Controllers\Api\Admin\UserController;
+use App\Http\Controllers\Api\Admin\AreaController;
+use App\Http\Controllers\Api\Admin\RuangController;
+use App\Http\Controllers\Api\Admin\KategoriSopController;
+use App\Http\Controllers\Api\Admin\SopController;
+use App\Http\Controllers\Api\Admin\SopLangkahController;
+use App\Http\Controllers\Api\Admin\SopTugasController;
+use App\Http\Controllers\Api\Admin\SopPelaksanaController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
