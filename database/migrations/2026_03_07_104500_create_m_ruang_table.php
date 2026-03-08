@@ -10,15 +10,12 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        if (!Schema::hasTable('m_user')) {
-            Schema::create('m_user', function (Blueprint $table) {
+        if (!Schema::hasTable('m_ruang')) {
+            Schema::create('m_ruang', function (Blueprint $table) {
                 $table->id();
+                $table->foreignId('area_id')->constrained('m_area')->onDelete('cascade');
                 $table->string('nama');
-                $table->string('email')->unique();
-                $table->string('password');
-                $table->string('hp');
-                $table->integer('level_id')->default(5);
-                $table->integer('status_aktif')->default(1);
+                $table->text('des')->nullable();
                 $table->timestamps();
             });
         }
@@ -29,6 +26,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('m_user');
+        Schema::dropIfExists('m_ruang');
     }
 };

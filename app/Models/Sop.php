@@ -20,10 +20,10 @@ class Sop extends Model
         'versi',
         'tanggal_berlaku',
         'tanggal_kadaluarsa',
-        'status',
         'status_sop',
         'pengawas_id',
         'total_poin',
+        'periode',
     ];
 
     public function kategori()

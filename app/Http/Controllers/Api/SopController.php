@@ -59,10 +59,11 @@ class SopController extends Controller
             'versi' => 'nullable|string|max:20',
             'tanggal_berlaku' => 'nullable|date',
             'tanggal_kadaluarsa' => 'nullable|date',
-            'status' => 'nullable|in:aktif,nonaktif,draft,expired',
-            'status_sop' => 'required|in:mutlak,custom',
+            'status' => 'nullable|in:aktif,nonaktif',
+            'status_sop' => 'nullable|in:draft,review,approved',
             'pengawas_id' => 'nullable|integer|exists:m_user,id',
             'total_poin' => 'nullable|integer',
+            'periode' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -125,10 +126,11 @@ class SopController extends Controller
             'versi' => 'nullable|string|max:20',
             'tanggal_berlaku' => 'nullable|date',
             'tanggal_kadaluarsa' => 'nullable|date',
-            'status' => 'required|in:aktif,nonaktif,draft,expired',
-            'status_sop' => 'required|in:mutlak,custom',
+            'status' => 'nullable|in:aktif,nonaktif',
+            'status_sop' => 'nullable|in:draft,review,approved',
             'pengawas_id' => 'nullable|integer|exists:m_user,id',
             'total_poin' => 'nullable|integer',
+            'periode' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
