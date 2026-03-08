@@ -10,6 +10,7 @@ class SopLangkah extends Model
     use HasFactory;
 
     protected $table = 'm_sop_langkah';
+    public $timestamps = false;
 
     protected $fillable = [
         'sop_id',

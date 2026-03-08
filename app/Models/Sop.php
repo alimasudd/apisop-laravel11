@@ -10,6 +10,7 @@ class Sop extends Model
     use HasFactory;
 
     protected $table = 'm_sop';
+    public $timestamps = false;
 
     protected $fillable = [
         'katsop_id',
