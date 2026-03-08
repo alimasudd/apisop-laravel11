@@ -202,10 +202,10 @@ class TugasController extends Controller
         }
 
         // Cek apakah sudah dikerjakan hari ini
-        $today = Carbon::today();
+        $todayStr = Carbon::today()->toDateString();
         $existing = SopPelaksana::where('user_id', $user->id)
             ->where('sop_langkah_id', $langkah_id)
-            ->whereDate('created_at', $today)
+            ->where('created_at', 'like', $todayStr . '%')
             ->first();
 
         if ($existing) {
@@ -215,19 +215,28 @@ class TugasController extends Controller
             return response()->json(['success' => false, 'message' => 'Langkah ini sedang dikerjakan hari ini', 'data' => $existing], 400);
         }
 
-        $pelaksana = SopPelaksana::create([
-            'user_id' => $user->id,
-            'sop_id' => $langkah->sop_id,
-            'sop_langkah_id' => $langkah_id,
-            'ruang_id' => $langkah->ruang_id,
-            'waktu_mulai' => time(),
-        ]);
+        try {
+            $pelaksana = SopPelaksana::create([
+                'user_id' => $user->id,
+                'sop_id' => $langkah->sop_id,
+                'sop_langkah_id' => $langkah_id,
+                'ruang_id' => $langkah->ruang_id,
+                'waktu_mulai' => time(),
+                'status_sop' => 0,
+                'poin' => 0,
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Berhasil mulai mengerjakan langkah',
-            'data' => $pelaksana
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Berhasil mulai mengerjakan langkah',
+                'data' => $pelaksana
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal simpan pelaksanaan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
