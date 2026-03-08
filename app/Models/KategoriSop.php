@@ -10,6 +10,7 @@ class KategoriSop extends Model
     use HasFactory;
 
     protected $table = 'm_kat_sop';
+    public $timestamps = false;
 
     protected $fillable = [
         'kode',

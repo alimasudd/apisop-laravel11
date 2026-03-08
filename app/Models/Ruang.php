@@ -10,8 +10,7 @@ class Ruang extends Model
     use HasFactory;
 
     protected $table = 'm_ruang';
-
-    const UPDATED_AT = null; // Based on DB schema check.
+    public $timestamps = false;
 
     protected $fillable = [
         'area_id',

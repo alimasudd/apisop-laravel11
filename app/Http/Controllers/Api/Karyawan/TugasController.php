@@ -38,9 +38,13 @@ class TugasController extends Controller
 
         $totalLangkah = count($assignedStepIds);
 
-        // Fetch execution data for today
+        // Fetch execution data for today. 
+        // We assume 'created_at' exists as a DATE or DATETIME if not failed on that.
+        // If it still fails, we might need to check the actual column name for date of execution.
         $pelaksanaanHariIni = SopPelaksana::where('user_id', $user->id)
-            ->whereDate('created_at', $today)
+            ->where(function ($q) use ($today) {
+                $q->whereDate('created_at', $today);
+            })
             ->get();
 
         $completedTodayIds = $pelaksanaanHariIni->whereNotNull('waktu_selesai')->pluck('sop_langkah_id')->toArray();

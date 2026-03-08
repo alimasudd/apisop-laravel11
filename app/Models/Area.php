@@ -10,6 +10,7 @@ class Area extends Model
     use HasFactory;
 
     protected $table = 'm_area';
+    public $timestamps = false;
 
     /**
      * The attributes that are mass assignable.
