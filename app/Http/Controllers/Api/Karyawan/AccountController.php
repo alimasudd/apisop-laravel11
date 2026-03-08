@@ -87,34 +87,29 @@ class AccountController extends Controller
     public function changePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'password_lama' => 'required',
-            'password_baru' => 'required|string|min:8|confirmed',
+            'password_baru' => 'required|string|min:6|confirmed',
+        ], [
+            'password_baru.required' => 'Password baru wajib diisi.',
+            'password_baru.min' => 'Password baru minimal harus 6 karakter.',
+            'password_baru.confirmed' => 'Konfirmasi password baru tidak sesuai.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validasi gagal',
+                'message' => 'Terdapat kesalahan pada inputan Anda.',
                 'data' => $validator->errors()
             ], 422);
         }
 
         $user = $request->user();
-
-        if (!Hash::check($request->password_lama, $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Password lama tidak sesuai'
-            ], 400);
-        }
-
         $userToUpdate = User::find($user->id);
         $userToUpdate->password = Hash::make($request->password_baru);
         $userToUpdate->save();
 
         return response()->json([
             'success' => true,
-            'message' => 'Password berhasil diubah'
+            'message' => 'Password Anda berhasil diperbarui.'
         ]);
     }
 }
