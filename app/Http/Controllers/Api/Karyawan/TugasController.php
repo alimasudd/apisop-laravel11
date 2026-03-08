@@ -20,132 +20,121 @@ class TugasController extends Controller
         $user = $request->user();
         $today = Carbon::today();
 
-        // Get all assignments for this user
-        $assignments = SopTugas::where('user_id', $user->id)->get();
+        $tugas = SopTugas::where('user_id', $user->id)->get();
 
-        $allAssignedSteps = [];
-        $sopDetailsMap = [];
+        $assignedStepIds = [];
+        $sopIds = [];
 
-        foreach ($assignments as $a) {
-            $sopId = (int) $a->sop_id;
-            if ($a->sop_langkah_id) {
-                $allAssignedSteps[$sopId][] = (int) $a->sop_langkah_id;
+        foreach ($tugas as $t) {
+            if ($t->sop_langkah_id) {
+                $assignedStepIds[] = (int) $t->sop_langkah_id;
             } else {
-                // If entire SOP is assigned, get all its steps
-                $steps = SopLangkah::where('sop_id', $sopId)->pluck('id')->toArray();
-                $allAssignedSteps[$sopId] = array_merge($allAssignedSteps[$sopId] ?? [], $steps);
+                $sopIds[] = (int) $t->sop_id;
+                $stepIds = SopLangkah::where('sop_id', $t->sop_id)->pluck('id')->toArray();
+                $assignedStepIds = array_merge($assignedStepIds, $stepIds);
             }
         }
+        $assignedStepIds = array_unique($assignedStepIds);
 
-        // Execution data for today
-        // Note: we assume executions are recorded in m_sop_pelaksana
-        $executionsToday = SopPelaksana::where('user_id', $user->id)
+        $totalLangkah = count($assignedStepIds);
+
+        // Fetch execution data for today. 
+        // We assume 'created_at' exists as a DATE or DATETIME if not failed on that.
+        // If it still fails, we might need to check the actual column name for date of execution.
+        $pelaksanaanHariIni = SopPelaksana::where('user_id', $user->id)
             ->where(function ($q) use ($today) {
                 $q->whereDate('created_at', $today);
-                // Fallback if created_at is missing but it's recorded as time() in waktu_mulai
-                $startOfDay = $today->timestamp;
-                $endOfDay = $today->copy()->endOfDay()->timestamp;
-                $q->orWhereBetween('waktu_mulai', [$startOfDay, $endOfDay]);
             })
             ->get();
 
-        $completedIds = $executionsToday->whereNotNull('waktu_selesai')->pluck('sop_langkah_id')->toArray();
-        $inProgressIds = $executionsToday->whereNull('waktu_selesai')->whereNotNull('waktu_mulai')->pluck('sop_langkah_id')->toArray();
+        $completedTodayIds = $pelaksanaanHariIni->whereNotNull('waktu_selesai')->pluck('sop_langkah_id')->toArray();
+        $inProgressTodayIds = $pelaksanaanHariIni->whereNull('waktu_selesai')->whereNotNull('waktu_mulai')->pluck('sop_langkah_id')->toArray();
 
-        $tugasHariIni = [];
-        $jadwalPelaksanaan = [];
+        $selesaiCount = count(array_intersect($assignedStepIds, $completedTodayIds));
+        $dikerjakanCount = count(array_intersect($assignedStepIds, $inProgressTodayIds));
+        $belumCount = max(0, $totalLangkah - $selesaiCount - $dikerjakanCount);
 
-        $sopIds = array_keys($allAssignedSteps);
-        $sops = Sop::whereIn('id', $sopIds)->with(['kategori', 'langkah.ruang'])->get();
+        $poinHariIni = $pelaksanaanHariIni->sum('poin');
 
+        $relevantSopIds = array_unique(array_merge($sopIds, SopLangkah::whereIn('id', $assignedStepIds)->pluck('sop_id')->toArray()));
+
+        $sops = Sop::whereIn('id', $relevantSopIds)->with([
+            'kategori',
+            'langkah' => function ($q) use ($assignedStepIds) {
+                $q->whereIn('id', $assignedStepIds)->with('ruang')->orderBy('urutan', 'asc');
+            }
+        ])->get();
+
+        $resultList = [];
         foreach ($sops as $sop) {
-            $assignedStepIdsForThisSop = array_unique($allAssignedSteps[$sop->id] ?? []);
+            $steps = [];
+            $countDone = 0;
+            $countInProgress = 0;
+            $countBelum = 0;
 
-            $stepsData = [];
-            $sopDone = 0;
-            $sopInProgress = 0;
-            $sopPending = 0;
-
-            // Load all steps for this SOP that are assigned to this user
             foreach ($sop->langkah as $langkah) {
-                if (!in_array($langkah->id, $assignedStepIdsForThisSop))
-                    continue;
-
                 $status = 'belum_dikerjakan';
-                $waktuMulai = null;
+                $waktuMulaiStr = null;
 
-                $exec = $executionsToday->where('sop_langkah_id', $langkah->id)->first();
-                if (in_array($langkah->id, $completedIds)) {
+                $pelaksanaan = $pelaksanaanHariIni->where('sop_langkah_id', $langkah->id)->first();
+
+                if (in_array($langkah->id, $completedTodayIds)) {
                     $status = 'selesai';
-                    $sopDone++;
-                } else if (in_array($langkah->id, $inProgressIds)) {
+                    $countDone++;
+                } else if (in_array($langkah->id, $inProgressTodayIds)) {
                     $status = 'sedang_dikerjakan';
-                    $sopInProgress++;
-                    if ($exec && $exec->waktu_mulai) {
-                        $waktuMulai = Carbon::createFromTimestamp($exec->waktu_mulai)->format('H:i');
+                    $countInProgress++;
+                    if ($pelaksanaan && $pelaksanaan->waktu_mulai) {
+                        $waktuMulaiStr = Carbon::createFromTimestamp($pelaksanaan->waktu_mulai)->format('H:i');
                     }
                 } else {
-                    $sopPending++;
+                    $countBelum++;
                 }
 
-                $stepsData[] = [
+                $steps[] = [
                     'id' => $langkah->id,
                     'urutan' => $langkah->urutan,
                     'deskripsi_langkah' => $langkah->deskripsi_langkah,
                     'ruang_nama' => $langkah->ruang ? $langkah->ruang->nama : '-',
-                    'poin' => (int) $langkah->poin,
+                    'poin' => $langkah->poin,
                     'status' => $status,
-                    'wajib' => (bool) $langkah->wajib,
-                    'waktu_mulai' => $waktuMulai
+                    'wajib' => $langkah->wajib,
+                    'waktu_mulai' => $waktuMulaiStr
                 ];
             }
 
-            if (empty($stepsData))
-                continue;
+            $percentage = count($steps) > 0 ? round(($countDone / count($steps)) * 100) : 0;
 
-            $percentage = round(($sopDone / count($stepsData)) * 100);
-
-            $sopData = [
+            $resultList[] = [
                 'id' => $sop->id,
                 'kode' => $sop->kode,
                 'nama' => $sop->nama,
                 'kategori_nama' => $sop->kategori ? $sop->kategori->nama : '-',
                 'progress' => [
                     'percentage' => $percentage,
-                    'selesai' => $sopDone,
-                    'dikerjakan' => $sopInProgress,
-                    'belum' => $sopPending,
-                    'total_langkah' => count($stepsData),
+                    'selesai' => $countDone,
+                    'dikerjakan' => $countInProgress,
+                    'belum' => $countBelum,
+                    'total_langkah' => count($steps),
                 ],
-                'langkah' => $stepsData,
+                'langkah' => $steps,
             ];
-
-            // For now, put all assigned tasks in Tugas Hari Ini
-            $tugasHariIni[] = $sopData;
-
-            // If it's not started yet, it could also be in Schedules? 
-            // Or maybe there's another logic for Schedules. 
-            // The user says they "sudah buatkan", maybe they assigned it to a future date?
-            // But m_sop_tugas has no date. 
-            // Let's assume Jadwal Pelaksanaan is anything that is NOT completed today.
-            if ($sopDone < count($stepsData)) {
-                $jadwalPelaksanaan[] = $sopData;
-            }
         }
 
         return response()->json([
             'success' => true,
+            'message' => 'Daftar tugas hari ini berhasil diambil',
             'data' => [
                 'summary' => [
-                    'total_langkah' => collect($tugasHariIni)->sum(fn($s) => $s['progress']['total_langkah']),
-                    'selesai' => collect($tugasHariIni)->sum(fn($s) => $s['progress']['selesai']),
-                    'dikerjakan' => collect($tugasHariIni)->sum(fn($s) => $s['progress']['dikerjakan']),
-                    'belum' => collect($tugasHariIni)->sum(fn($s) => $s['progress']['belum']),
-                    'poin_hari_ini' => (int) $executionsToday->sum('poin'),
-                    'jadwal_pelaksanaan' => count($jadwalPelaksanaan)
+                    'total_langkah' => $totalLangkah,
+                    'selesai' => $selesaiCount,
+                    'dikerjakan' => $dikerjakanCount,
+                    'belum' => $belumCount,
+                    'poin_hari_ini' => (int) $poinHariIni,
+                    'jadwal_pelaksanaan' => count($resultList) // For now same as tugas_hari_ini to test UI tabs
                 ],
-                'tugas_hari_ini' => $tugasHariIni,
-                'jadwal_pelaksanaan' => $jadwalPelaksanaan
+                'tugas_hari_ini' => $resultList,
+                'jadwal_pelaksanaan' => $resultList // Add this to prevent null/empty on the other tab
             ]
         ]);
     }
