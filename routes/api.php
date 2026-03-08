@@ -21,7 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // --- API ADMIN ---
-    Route::group(['prefix' => 'admin'], function () {
+    Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         Route::apiResource('users', UserController::class);
         Route::apiResource('areas', AreaController::class);
         Route::apiResource('ruangs', RuangController::class);
