@@ -17,6 +17,7 @@ class SopLangkahController extends Controller
         $search = $request->query('search');
         $sop_id = $request->query('sop_id');
         $wajib = $request->query('wajib');
+        $perPage = $request->query('per_page', 10);
 
         $langkahs = SopLangkah::query()
             ->with(['sop.kategori', 'ruang', 'user'])
@@ -38,7 +39,7 @@ class SopLangkahController extends Controller
             })
             ->orderBy('sop_id')
             ->orderBy('urutan')
-            ->paginate(10);
+            ->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -69,9 +70,9 @@ class SopLangkahController extends Controller
             'deskripsi_langkah' => 'required|string',
             'wajib' => 'required|boolean',
             'poin' => 'nullable|integer',
-            'deadline_waktu' => 'nullable|integer',
-            'toleransi_waktu_sebelum' => 'nullable|integer',
-            'toleransi_waktu_sesudah' => 'nullable|integer',
+            'deadline_waktu' => 'nullable|string',
+            'toleransi_waktu_sebelum' => 'nullable|string',
+            'toleransi_waktu_sesudah' => 'nullable|string',
             'wa_reminder' => 'nullable|boolean',
             'wa_jam_kirim' => 'nullable|string|max:5',
         ]);
@@ -136,9 +137,9 @@ class SopLangkahController extends Controller
             'deskripsi_langkah' => 'required|string',
             'wajib' => 'required|boolean',
             'poin' => 'nullable|integer',
-            'deadline_waktu' => 'nullable|integer',
-            'toleransi_waktu_sebelum' => 'nullable|integer',
-            'toleransi_waktu_sesudah' => 'nullable|integer',
+            'deadline_waktu' => 'nullable|string',
+            'toleransi_waktu_sebelum' => 'nullable|string',
+            'toleransi_waktu_sesudah' => 'nullable|string',
             'wa_reminder' => 'nullable|boolean',
             'wa_jam_kirim' => 'nullable|string|max:5',
         ]);

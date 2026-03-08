@@ -15,6 +15,7 @@ class SopController extends Controller
     public function index(Request $request)
     {
         $search = $request->query('search');
+        $perPage = $request->query('per_page', 10);
 
         $sops = Sop::query()
             ->with(['kategori', 'pengawas'])
@@ -28,7 +29,7 @@ class SopController extends Controller
                     });
             })
             ->latest()
-            ->paginate(10);
+            ->paginate($perPage);
 
         return response()->json([
             'success' => true,
