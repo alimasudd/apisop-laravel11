@@ -45,3 +45,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Pelaksanaan SOP CRUD
     Route::apiResource('pelaksanaan-sops', SopPelaksanaController::class);
 });
+
+Route::get('/test', function () {
+    return response()->json([
+        'status' => 'API hidup'
+    ]);
+});
